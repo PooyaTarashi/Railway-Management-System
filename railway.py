@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from collections import OrderedDict
 
-# now let's add second phase
 
 class Train:
     """
@@ -77,8 +76,9 @@ class Train:
 
 class User:
     def __init__(self, name:str):
-        self._name = None
-        self._last_cancelation = None
+        self._name:str = None
+        self._last_cancelation:datetime = None
+        self._time_of_last_reservation:datetime = None
         self.name = name
 
     @property
@@ -96,6 +96,14 @@ class User:
     @last_cancelation.setter
     def last_cancelation(self, time:datetime):
         self._last_cancelation = time
+
+    @property
+    def time_of_last_reservation(self):
+        return self._time_of_last_reservation
+    
+    @time_of_last_reservation.setter
+    def time_of_last_reservation(self, time:datetime):
+        self._time_of_last_reservation = time
 
 class Reservation:
     def __init__(self, user:User, train:Train, time:datetime):
