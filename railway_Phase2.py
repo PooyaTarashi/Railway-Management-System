@@ -377,8 +377,9 @@ for i in range(n):
     if len(data) != 5 and len(data) != 4:
         trains_validity = False
     trains_commands.append(data)
-    if data[-1].isdigit() and data[-1] != '0' and data[-2].isdigit() != False:
-        trains_commands[-1].append(input())
+    if trains_validity:    
+        if data[-1].isdigit() and data[-1] != '0' and data[-2].isdigit() != False:
+            trains_commands[-1].append(input())
 
 if trains_validity:
     for cmd in trains_commands:
