@@ -87,6 +87,9 @@ class Train:
     def add_cancelation_request(self, reservation):
         self._cancelation_request.append(reservation)
 
+    def pop_cancelation_request(self, reservation):
+        self._cancelation_request.pop(0)
+
     def cancel_done(self):
         self._cancelation_request.pop(0)
 
@@ -126,10 +129,10 @@ class User:
 
 class Reservation:
     def __init__(self, user:User, train:Train, time:datetime, seat_type:str):
-        self._user = None
-        self._train = None
-        self._time = None
-        self._seat_type = None
+        self._user:User = None
+        self._train:Train = None
+        self._time:datetime = None
+        self._seat_type:str = None
         self.user = user
         self.train = train
         self.time = time
@@ -227,6 +230,7 @@ class Railway_System:
         return False
 
     def book(self, cmd):
+        # getting input:
         if len(cmd) == 5:
             reserve_time_str, username, origin, destination, print_id = cmd
             seat_type = '0'
@@ -236,72 +240,64 @@ class Railway_System:
         train_name = origin + ' ' + destination
         queued_request:Reservation = 0
         reservation_validity = "Movafagh"
-        # the block down here checks reservation validity.
+
+        # add user if not in users:
+        if username not in self._users.keys():
+            self._users[username] = User(username)
+        the_user:User = self._users[username]
+        
+        # checking if is there such a train:
         if train_name not in self._trains.keys():
             reservation_validity = "Na Movafagh. Masir vojood nadarad."
         else:
-            if reservation_validity == "Movafagh":
-                if reserve_time >= self._trains[train_name].dep_time:
-                    # print("reserve time is after trains start")
-                    reservation_validity = "Na Movafagh. Masir vojood nadarad."
-                
-                if seat_type == '0':
-                    seat_type_text = "Normal"
-                else:
-                    seat_type_text = seat_type
-                    seat_type_text = "VIP" + seat_type_text
-                    the_train:Train = self._trains[train_name]
-                    if len(the_train._cancelation_request) != 0:
-                        queued_request = the_train._cancelation_request[0]
-                        the_train._cancelation_request.pop(0)
-                        self._trains[train_name].increase_capacity(seat_type)
-                
-                if self._trains[train_name].capacity[seat_type] == 0 and reservation_validity == "Movafagh":
-                    # print("Train out of capacity")
-                    reservation_validity = "Na Movafagh. Zarfiat vojood nadarad."
-                if seat_type != '0' and (username in self._users.keys()) and reservation_validity == "Movafagh":
-                    if len(self._users[username].reservation_date_record) != 0:
-                        if max(self._users[username].reservation_date_record) + Railway_System.thirty_days < reserve_time:
-                            reservation_validity = "Na Movafagh. Shoma reserve qabli nadarid va nemitavanid VIP reserve konid."
-                    else:
-                        reservation_validity = "Na Movafagh. Shoma reserve qabli nadarid va nemitavanid VIP reserve konid."
-                elif seat_type != '0' and reservation_validity == "Movafagh":
+            the_train:Train = self._trains[train_name]
+
+        # checking whether the train dep_time is valid to reserve
+        if reservation_validity == "Movafagh":
+            if the_train.dep_time <= reserve_time:
+                reservation_validity = "Na Movafagh. Masir vojood nadarad."
+            
+        # checking if user can buy a VIP or not:
+        if reservation_validity == "Movafagh":
+            if seat_type != '0':
+                if len(the_user.reservation_date_record) == 0:
+                    reservation_validity = "Na Movafagh. Shoma reserve qabli nadarid va nemitavanid VIP reserve konid."
+                elif the_user.reservation_date_record[-1] + Railway_System.thirty_days < reserve_time:
                     reservation_validity = "Na Movafagh. Shoma reserve qabli nadarid va nemitavanid VIP reserve konid."
 
-                
+        # checking if is there cancelation request in list or not:
+        if reservation_validity == "Movafagh" and seat_type != '0':
+            if len(the_train.cancelation_request) != 0:
+                queued_request:Reservation = the_train.cancelation_request[0]
+                the_train.pop_cancelation_request()
+                self._reservations.remove(queued_request)
+                the_train.increase_capacity(seat_type=seat_type)
+                queued_request.user.last_cancelation = reserve_time
 
-        # the final reserve action and printing result
+        # checking capacity
         if reservation_validity == "Movafagh":
-            if username not in self._users.keys():
-                self.add_user(username)
-            self._reservations.append(Reservation(user= self._users[username], train= self._trains[train_name] , time= reserve_time, seat_type=seat_type))
-            self._users[username].add_reservation_record(reserve_time)
-            self._trains[train_name].decrease_capacity(seat_type)
-            # print("Movafagh")
+            if the_train.capacity[seat_type] == 0:
+                reservation_validity = "Na Movafagh. Zarfiat vojood nadarad."
+
+        # fianl action:
+        if reservation_validity == "Movafagh":
+            self._reservations.append(Reservation(user=the_user, train=the_train, time=reserve_time, seat_type=seat_type))
+            the_user.add_reservation_record(reserve_time)
+            the_train.decrease_capacity(seat_type=seat_type)
+            # printing result
             if seat_type == '0':
                 seat_type_text = "Normal"
-                # seat_type_text = seat_type
-                # seat_type_text = "VIP" + seat_type_text
-                the_train:Train = self._trains[train_name]
-                if queued_request != 0:
-                    queued_request.user.last_cancelation = reserve_time
-                    self._results.append(["Reserve karbar " + username + " baraye belit model " + seat_type_text + " movafagh bood. Hamchenin Reserve karbar " + queued_request.user + " baraye in belit cancel shod.", int(print_id)])
-                else:
-                    self._results.append(["Reserve karbar " + username + " baraye belit model " + seat_type_text + " movafagh bood.", int(print_id)])
             else:
-                seat_type_text = seat_type
-                seat_type_text = "VIP" + seat_type_text
-                the_train:Train = self._trains[train_name]
-                if queued_request != 0:
-                    # the_user.last_cancelation = cancelation_time
-                    # queued_request.user.last_cancelation = queued_request.time      # if didn't work, I should put the time of this new request for reserve.
-                    queued_request.user.last_cancelation = reserve_time
-                    self._results.append(["Reserve karbar " + username + " baraye belit model " + seat_type_text + " movafagh bood. Hamchenin Reserve karbar " + queued_request.user.name + " baraye in belit cancel shod.", int(print_id)])
-                else:
-                    self._results.append(["Reserve karbar " + username + " baraye belit model " + seat_type_text + " movafagh bood.", int(print_id)])
+                seat_type_text = "VIP" + seat_type
+            if queued_request != 0:
+                self._results.append(["Reserve karbar " + username + " baraye belit model " + seat_type_text + " movafagh bood. Hamchenin Reserve karbar " + queued_request.user + " baraye in belit cancel shod.", print_id])
+            else:
+                self._results.append(["Reserve karbar " + username + " baraye belit model " + seat_type_text + " movafagh bood.", int(print_id)])
+
         else:
-            # print("Na Movafagh")
-            self._results.append([reservation_validity, int(print_id)])
+            self._results.append([reservation_validity, print_id])
+            
+
 
     def cancel_reservation(self, cmd, command_list):
         if len(cmd) == 6:
