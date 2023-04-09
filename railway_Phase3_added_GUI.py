@@ -1,3 +1,4 @@
+from tkinter import *
 from datetime import datetime, timedelta, time
 from collections import OrderedDict
 from copy import deepcopy
@@ -626,60 +627,95 @@ class Railway_System:
         return result[:-1]
     
 
-ali_baba = Railway_System()
-
-n = int(input())
-vehicles_commands = []
-vehicles_validity = True
-for i in range(n):
-    data = input().split()
-    if len(data) != 6 and len(data) != 5:
-        vehicles_validity = False
-    vehicles_commands.append(data)
-    if vehicles_validity:    
-        if data[-1].isdigit() and data[-1] != '0' and data[-2].isdigit() != False:
-            vehicles_commands[-1].append(input())
-
-if vehicles_validity:
-    for cmd in vehicles_commands:
-        ali_baba.add_vehicle(cmd)
-    print("Done")
-else:
-    print("Error")
 
 
-# if it didn't work, I will bring the whole block below under an if statement. if vehicles_validity...
-commands_list = []
-if vehicles_validity:
-    k = int(input())
-    for i in range(k):
+def main_app():
+    ali_baba = Railway_System()
+    n = int(n_inp.get())
+    print(n)
+    vehicles_commands = []
+    vehicles_validity = True
+    for i in range(n):
         data = input().split()
-        data.append(i)
-        commands_list.append(data)
-        
-    # print(*commands_list, sep='\n')
-    # print("====================================================================================================")
-    commands_list = sorted(commands_list, key=Railway_System.time_key)        
-    # print(*commands_list, sep='\n')
+        if len(data) != 6 and len(data) != 5:
+            vehicles_validity = False
+        vehicles_commands.append(data)
+        if vehicles_validity:    
+            if data[-1].isdigit() and data[-1] != '0' and data[-2].isdigit() != False:
+                vehicles_commands[-1].append(input())
 
-        
-    for command in commands_list:
-        if command[-2] != "cancel" and (command[1] != "Zarfiat" and command[2] != "reserve" and command[3] != "baraye") and (command[1] != "Reserve" and command[3] != "baraye" and command[4] != "afrad") and (command[1] != "Reserve" and command[3] != "Reserve" and command[4] != "sa'at") and (command[1] != "Emkan"):
-            ali_baba.book(command)
-        elif command[1] == "Zarfiat" and command[2] == "reserve" and command[3] == "baraye":
-            ali_baba.cut_the_capacity(command)
-        elif command[1] == "Reserve" and command[3] == "baraye" and command[4] == "afrad":
-            ali_baba.apply_age_limits(command)
-        elif command[1] == "Reserve" and command[3] == "dar" and command[4] == "sa'at":
-            ali_baba.apply_time_limit(command)
-        elif command[1] == "Emkan":
-            if command[10] == "hafte":
-                ali_baba.apply_reserves_count_for_week(command)
+    if vehicles_validity:
+        for cmd in vehicles_commands:
+            ali_baba.add_vehicle(cmd)
+        print("Done")
+    else:
+        print("Error")
+
+
+    # if it didn't work, I will bring the whole block below under an if statement. if vehicles_validity...
+    commands_list = []
+    if vehicles_validity:
+        k = int(input())
+        for i in range(k):
+            data = input().split()
+            data.append(i)
+            commands_list.append(data)
+            
+        # print(*commands_list, sep='\n')
+        # print("====================================================================================================")
+        commands_list = sorted(commands_list, key=Railway_System.time_key)        
+        # print(*commands_list, sep='\n')
+
+            
+        for command in commands_list:
+            if command[-2] != "cancel" and (command[1] != "Zarfiat" and command[2] != "reserve" and command[3] != "baraye") and (command[1] != "Reserve" and command[3] != "baraye" and command[4] != "afrad") and (command[1] != "Reserve" and command[3] != "Reserve" and command[4] != "sa'at") and (command[1] != "Emkan"):
+                ali_baba.book(command)
+            elif command[1] == "Zarfiat" and command[2] == "reserve" and command[3] == "baraye":
+                ali_baba.cut_the_capacity(command)
+            elif command[1] == "Reserve" and command[3] == "baraye" and command[4] == "afrad":
+                ali_baba.apply_age_limits(command)
+            elif command[1] == "Reserve" and command[3] == "dar" and command[4] == "sa'at":
+                ali_baba.apply_time_limit(command)
+            elif command[1] == "Emkan":
+                if command[10] == "hafte":
+                    ali_baba.apply_reserves_count_for_week(command)
+                else:
+                    ali_baba.apply_reserves_count_for_else(command)
             else:
-                ali_baba.apply_reserves_count_for_else(command)
-        else:
-            ali_baba.cancel_reservation(command, commands_list)
+                ali_baba.cancel_reservation(command, commands_list)
 
 
-# print("========================================================================================================")
-# ali_baba.print_result()
+    # print("========================================================================================================")
+    # ali_baba.print_result()
+
+
+window = Tk()
+
+
+def get_n():
+    admin_name.pack_forget()
+    admin_pass.pack_forget()
+    enter_button.pack_forget()
+    login_text = Label(window, text="logged in as {}\nHow many vehicle infos do you want to add?".format(admin_name.get()))
+    login_text.pack()
+    n_inp = Entry(window)
+    n_inp.pack()
+    sub_but = Button(window, text="Submit")
+    sub_but.pack()
+    sub_but.config(command=main_app)
+
+window.geometry("600x360")
+# making entry which does nothing
+admin_name = Entry(window)
+admin_name.pack()
+admin_pass = Entry(window, show="*")
+admin_pass.pack()
+enter_button = Button(window, text="Enter", command=get_n)
+enter_button.pack()
+
+
+
+
+window.mainloop()
+
+

@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta, time
 from collections import OrderedDict
 from copy import deepcopy
+from tkinter import *
+from tkinter import messagebox
+import sys
 
 
 class Vehicle:
@@ -628,58 +631,111 @@ class Railway_System:
 
 ali_baba = Railway_System()
 
-n = int(input())
-vehicles_commands = []
 vehicles_validity = True
-for i in range(n):
-    data = input().split()
-    if len(data) != 6 and len(data) != 5:
-        vehicles_validity = False
-    vehicles_commands.append(data)
-    if vehicles_validity:    
-        if data[-1].isdigit() and data[-1] != '0' and data[-2].isdigit() != False:
-            vehicles_commands[-1].append(input())
 
-if vehicles_validity:
-    for cmd in vehicles_commands:
-        ali_baba.add_vehicle(cmd)
-    print("Done")
-else:
-    print("Error")
+def get_trains():
+    global no
+    global ls
+    global vips
+    global vehicles_validity
+    n = int(no)
+    # n = int(input())
+    vehicles_commands = []
+    for i in range(n):
+        data = ls[i].split()
+        if len(data) != 6 and len(data) != 5:
+            vehicles_validity = False
+        vehicles_commands.append(data)
+        if vehicles_validity:    
+            if data[-1].isdigit() and data[-1] != '0' and data[-2].isdigit() != False:
+                vehicles_commands[-1].append(vips[i])
+
+    if vehicles_validity:
+        for cmd in vehicles_commands:
+            ali_baba.add_vehicle(cmd)
+        print("Done")
+        messagebox.showinfo(title="Successfully Done.", message="Vehicles are valid!")
+    else:
+        print("Error")
+        messagebox.showerror(title="Unsuccessful.", message="Something went wrong, try again.", )
+        main_app()
 
 
 # if it didn't work, I will bring the whole block below under an if statement. if vehicles_validity...
-commands_list = []
-if vehicles_validity:
-    k = int(input())
-    for i in range(k):
-        data = input().split()
-        data.append(i)
-        commands_list.append(data)
-        
-    # print(*commands_list, sep='\n')
-    # print("====================================================================================================")
-    commands_list = sorted(commands_list, key=Railway_System.time_key)        
-    # print(*commands_list, sep='\n')
-
-        
-    for command in commands_list:
-        if command[-2] != "cancel" and (command[1] != "Zarfiat" and command[2] != "reserve" and command[3] != "baraye") and (command[1] != "Reserve" and command[3] != "baraye" and command[4] != "afrad") and (command[1] != "Reserve" and command[3] != "Reserve" and command[4] != "sa'at") and (command[1] != "Emkan"):
-            ali_baba.book(command)
-        elif command[1] == "Zarfiat" and command[2] == "reserve" and command[3] == "baraye":
-            ali_baba.cut_the_capacity(command)
-        elif command[1] == "Reserve" and command[3] == "baraye" and command[4] == "afrad":
-            ali_baba.apply_age_limits(command)
-        elif command[1] == "Reserve" and command[3] == "dar" and command[4] == "sa'at":
-            ali_baba.apply_time_limit(command)
-        elif command[1] == "Emkan":
-            if command[10] == "hafte":
-                ali_baba.apply_reserves_count_for_week(command)
+def get_command():
+    commands_list = []
+    if vehicles_validity:
+        k = int(input())
+        for i in range(k):
+            data = input().split()
+            data.append(i)
+            commands_list.append(data)
+            
+        commands_list = sorted(commands_list, key=Railway_System.time_key)        
+    
+        for command in commands_list:
+            if command[-2] != "cancel" and (command[1] != "Zarfiat" and command[2] != "reserve" and command[3] != "baraye") and (command[1] != "Reserve" and command[3] != "baraye" and command[4] != "afrad") and (command[1] != "Reserve" and command[3] != "Reserve" and command[4] != "sa'at") and (command[1] != "Emkan"):
+                ali_baba.book(command)
+            elif command[1] == "Zarfiat" and command[2] == "reserve" and command[3] == "baraye":
+                ali_baba.cut_the_capacity(command)
+            elif command[1] == "Reserve" and command[3] == "baraye" and command[4] == "afrad":
+                ali_baba.apply_age_limits(command)
+            elif command[1] == "Reserve" and command[3] == "dar" and command[4] == "sa'at":
+                ali_baba.apply_time_limit(command)
+            elif command[1] == "Emkan":
+                if command[10] == "hafte":
+                    ali_baba.apply_reserves_count_for_week(command)
+                else:
+                    ali_baba.apply_reserves_count_for_else(command)
             else:
-                ali_baba.apply_reserves_count_for_else(command)
-        else:
-            ali_baba.cancel_reservation(command, commands_list)
+                ali_baba.cancel_reservation(command, commands_list)
 
 
-# print("========================================================================================================")
-# ali_baba.print_result()
+no = 0
+ls = []
+vips = []
+
+
+def main_app():
+    inp_counter = 0
+    def counter():
+        global inp_counter
+        inp_counter += 1
+        global no
+        no = int(n.get())
+        global ls
+        ls.append(train_info.get())
+        global vips
+        vips.append(vip_set.get())
+        trains_count_till_now.config(text="{} of {} entered.".format(inp_counter, n.get()))
+        n.grid_forget()
+        trains_no_text.grid_forget()
+
+
+
+    window = Tk()
+    window.title("Railway management system")
+    window.geometry("600x360")
+    window.resizable(width=False, height=False)
+    trains_no_text = Label(window, text="no of trains:")
+    trains_no_text.grid(column=0, row=0)
+    n = Entry(window)
+    n.grid(column=1, row=0)
+    Label(window, text="Train Information:").grid(column=0, row=1)
+    train_info = Entry(window)
+    train_info.grid(column=1, row=1)
+    Label(window, text="VIP set:").grid(column=0, row=2)
+    vip_set = Entry(window)
+    vip_set.grid(column=1, row=2)
+    Button(window, text="submit", command=counter).grid(column=2, row=2)
+    trains_count_till_now = Label(window, text="0 of n entered.")
+    trains_count_till_now.grid(column=2, row=1)
+
+
+    Button(window, text="\t  Validate Trains\t\t", command=get_trains).grid(column=1, row=3)
+
+
+    Button(window, text="Exit", command=sys.exit).grid(column=1, row=5)
+    window.mainloop()
+
+main_app()
