@@ -1,1 +1,1 @@
-len(cmd) == 5 and cmd[-1] == '0'
+(1 - available_percentage) * vehicle.primary_capacity[seat]
