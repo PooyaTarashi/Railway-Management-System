@@ -246,6 +246,15 @@ class Railway_System:
         self._reservations = []
         self._results = []
         self.rule_idx = 0
+        self.train_reserve_count_limit = 10000
+        self.airplane_reserve_count_limit = 10000
+        self.train_reserves_in_this_period = 0
+        self.airplane_reserves_in_this_period = 0
+        self.airplane_active_limit = False
+        self.train_active_limit = False
+
+
+
         
 
     def add_vehicle(self, cmd):
@@ -286,6 +295,8 @@ class Railway_System:
     def decision_maker(self, reserve_time:datetime, origin, destination, seat_type, username) -> Vehicle:
         tmp_vehcile_dep_time:datetime = None
         suitable_vehicles:list = []
+        if (("Train" + ' ' + origin + ' ' + destination) not in self._vehicles.keys()) and (("Airplane" + ' ' + origin + ' ' + destination) not in self._vehicles.keys()):
+            return "Na Movafagh. Masir vojood nadarad."
         if (username not in self._users.keys()) and seat_type != '0':
             return "Na Movafagh. Shoma reserve qabli nadarid va nemitavanid VIP reserve konid."
         if username in self._users.keys() and seat_type != '0':
@@ -316,13 +327,12 @@ class Railway_System:
             seat_type = '0'
             vehicle = "Auto"
         elif len(cmd) == 7:
-            reserve_time_str, username, origin, destination, vehicle_or_type, age, print_id = cmd
-            if vehicle_or_type.isdigit():
-                seat_type = vehicle_or_type
+            if cmd[4].isdigit():
+                reserve_time_str, username, origin, destination, age, seat_type, print_id = cmd
                 vehicle = "Auto"
             else:
+                reserve_time_str, username, origin, destination, vehicle, age, print_id = cmd
                 seat_type = '0'
-                vehicle = vehicle_or_type
         else:
             reserve_time_str, username, origin, destination, vehicle, age, seat_type, print_id = cmd
         reserve_time = datetime.strptime(reserve_time_str, "%Y/%m/%d-%H:%M")
@@ -409,28 +419,69 @@ class Railway_System:
 
         # time per period operation for else
         if reservation_validity == "Movafagh":
-            if the_vehicle.active_times_limitation_for_else:
-                if the_vehicle.last_reservation != None:
-                    if the_vehicle.reservation_step == "rooz":
-                        avail_time = the_vehicle.last_reservation + timedelta(days=1)
-                        avail_time_str = datetime.strftime(avail_time, "%Y/%m/%d-%H:%M")
-                        avail_time_str = avail_time_str[:10]
-                        avail_time_str += "-00:00"
-                        avail_time = datetime.strptime(avail_time_str, "%Y/%m/%d-%H:%M")
-                        if avail_time < reserve_time:
-                            the_vehicle.reserves_in_this_step = 0
-                        if the_vehicle.reserves_in_this_step > the_vehicle.reserve_limit:
-                            reservation_validity = "Na Movafagh. Emkan reserve vojood nadarad."
-                    else:
-                        avail_time = the_vehicle.last_reservation + timedelta(days=30)
-                        avail_time_str = datetime.strftime(avail_time, "%Y/%m/%d-%H:%M")
-                        avail_time_str = avail_time_str[:7]
-                        avail_time_str += "/00-00:00"
-                        avail_time = datetime.strptime(avail_time_str, "%Y/%m/%d-%H:%M")
-                        if avail_time < reserve_time:
-                            the_vehicle.reserves_in_this_step = 0
-                        if the_vehicle.reserves_in_this_step >= the_vehicle.reserve_limit:
-                            reservation_validity = "Na Movafagh. Emkan reserve vojood nadarad."
+            if vehicle == "Train":
+                if self.train_active_limit:
+                    if the_vehicle.last_reservation != None:
+                        if the_vehicle.reservation_step == "rooz":
+                            avail_time = self._reservations[-1].time + timedelta(days=1)
+                            avail_time_str = datetime.strftime(avail_time, "%Y/%m/%d-%H:%M")
+                            avail_time_str = avail_time_str[:10]
+                            avail_time_str += "-00:00"
+                            avail_time = datetime.strptime(avail_time_str, "%Y/%m/%d-%H:%M")
+                            if avail_time < reserve_time:
+                                if the_vehicle.vehicle_type == "Train":
+                                    self.train_reserves_in_this_period = 0
+                                else:
+                                    self.airplane_reserves_in_this_period = 0
+                            if the_vehicle.vehicle_type == "Train":
+                                if self.train_reserves_in_this_period >= self.train_reserve_count_limit:
+                                    reservation_validity = "Na Movafagh. Emkan reserve vojood nadarad."
+                            else:
+                                if self.airplane_reserves_in_this_period >= self.airplane_reserve_count_limit:
+                                    reservation_validity = "Na Movafagh. Emkan reserve vojood nadarad."
+
+                        else:
+                            avail_time = the_vehicle.last_reservation + timedelta(days=30)
+                            avail_time_str = datetime.strftime(avail_time, "%Y/%m/%d-%H:%M")
+                            avail_time_str = avail_time_str[:7]
+                            avail_time_str += "/00-00:00"
+                            avail_time = datetime.strptime(avail_time_str, "%Y/%m/%d-%H:%M")
+                            if avail_time < reserve_time:
+                                the_vehicle.reserves_in_this_step = 0
+                            if self.train_reserves_in_this_period >= self.train_active_limit:
+                                reservation_validity = "Na Movafagh. Emkan reserve vojood nadarad."
+            else:
+                if self.airplane_active_limit:
+                    if the_vehicle.last_reservation != None:
+                        if the_vehicle.reservation_step == "rooz":
+                            avail_time = self._reservations[-1].time + timedelta(days=1)
+                            avail_time_str = datetime.strftime(avail_time, "%Y/%m/%d-%H:%M")
+                            avail_time_str = avail_time_str[:10]
+                            avail_time_str += "-00:00"
+                            avail_time = datetime.strptime(avail_time_str, "%Y/%m/%d-%H:%M")
+                            if avail_time < reserve_time:
+                                if the_vehicle.vehicle_type == "Train":
+                                    self.train_reserves_in_this_period = 0
+                                else:
+                                    self.airplane_reserves_in_this_period = 0
+                            if the_vehicle.vehicle_type == "Train":
+                                if self.train_reserves_in_this_period >= self.train_reserve_count_limit:
+                                    reservation_validity = "Na Movafagh. Emkan reserve vojood nadarad."
+                            else:
+                                if self.airplane_reserves_in_this_period >= self.airplane_reserve_count_limit:
+                                    reservation_validity = "Na Movafagh. Emkan reserve vojood nadarad."
+
+                        else:
+                            avail_time = self._reservations[-1].time + timedelta(days=30)
+                            avail_time_str = datetime.strftime(avail_time, "%Y/%m/%d-%H:%M")
+                            avail_time_str = avail_time_str[:7]
+                            avail_time_str += "/01-00:00"
+                            avail_time = datetime.strptime(avail_time_str, "%Y/%m/%d-%H:%M")
+                            if avail_time < reserve_time:
+                                self.airplane_reserves_in_this_period = 0
+                            if self.airplane_reserves_in_this_period >= self.airplane_active_limit:
+                                reservation_validity = "Na Movafagh. Emkan reserve vojood nadarad."
+
         
 
         # fianl action:
@@ -439,6 +490,10 @@ class Railway_System:
             the_user.add_reservation_record(reserve_time)
             the_vehicle.decrease_capacity(seat_type=seat_type)
             the_vehicle.reserves_in_this_step += 1
+            if vehicle == "Train":
+                self.train_reserves_in_this_period += 1
+            else:
+                self.airplane_reserves_in_this_period += 1
             the_vehicle.last_reservation = reserve_time
             # printing result
             if seat_type == '0':
@@ -562,6 +617,8 @@ class Railway_System:
                         print("Reserve karbar " + reserve.user.name + " baraye " + reserve.vehicle.vehicle_type.lower() + " model VIP" + reserve.seat_type + " be dadil qanoon " + str(self.rule_idx) + " cancel shod.")
 
     def apply_time_limit(self, cmd):
+        self.rule_idx += 1
+        print("Qanoon shomareye " + str(self.rule_idx) + " ba movafaghiat sabt shod.")
         vehicle_type = Railway_System.capitalize_first_letter(cmd[2])
         for vehicle in self._vehicles.values():
             if vehicle.vehicle_type == vehicle_type:
@@ -570,30 +627,45 @@ class Railway_System:
                 vehicle.end_time = time(hour=int(cmd[7]))
 
     def apply_reserves_count_for_week(self, cmd):
+        self.rule_idx += 1
+        print("Qanoon shomareye " + str(self.rule_idx) + " ba movafaghiat sabt shod.")
         vehicle_type = Railway_System.capitalize_first_letter(cmd[4])
         times_per_step = int(cmd[7])
         time_step = timedelta(days=7)
         
         # activating rule
         # vehicle:Vehicle = None
-        for vehicle in self._vehicles.values():
-            if vehicle.vehicle_type == vehicle_type:
-                vehicle.active_times_limitation = True
-                vehicle.reservation_step = time_step
-                vehicle.reserve_limit = times_per_step
+        # for vehicle in self._vehicles.values():
+        #     if vehicle.vehicle_type == vehicle_type:
+        #         vehicle.active_times_limitation = True
+        #         vehicle.reservation_step = time_step
+        #         vehicle.reserve_limit = times_per_step
                 # vehicle.reserves_in_this_step = times_per_step
 
     def apply_reserves_count_for_else(self, cmd):
+        self.rule_idx += 1
+        print("Qanoon shomareye " + str(self.rule_idx) + " ba movafaghiat sabt shod.")
         vehicle_type = Railway_System.capitalize_first_letter(cmd[4])
         times_per_step = int(cmd[7])
         time_step = cmd[10]
+        if vehicle_type == "Train":
+            self.train_active_limit = True
+        else:
+            self.airplane_active_limit = True
+
+
+        if vehicle_type == "Train":
+            self.train_reserve_count_limit = times_per_step
+        else:
+            self.airplane_reserve_count_limit = times_per_step
+
 
         # vehicle:Vehicle = None
-        for vehicle in self._vehicles.values():
-            if vehicle.vehicle_type == vehicle_type:
-                vehicle.active_times_limitation_for_else = True
-                vehicle.reservation_step = time_step
-                vehicle.reserve_limit = times_per_step
+        # for vehicle in self._vehicles.values():
+        #     if vehicle.vehicle_type == vehicle_type:
+        #         vehicle.active_times_limitation_for_else = True
+        #         vehicle.reservation_step = time_step
+        #         vehicle.reserve_limit = times_per_step
 
     def print_result(self):
         # to be honest, I messed up, I thought results should be printed with input order

@@ -449,11 +449,14 @@ class Railway_System:
             else:
                 seat_type_text = "VIP" + seat_type
             if queued_request != 0:
+                list_box2.insert(print_id, ("Reserve karbar " + username + " baraye belit " + vehicle.lower() + " model " + seat_type_text + " movafagh bood. Hamchenin Reserve karbar " + queued_request.user.name + " baraye in belit cancel shod."))
                 print("Reserve karbar " + username + " baraye belit " + vehicle.lower() + " model " + seat_type_text + " movafagh bood. Hamchenin Reserve karbar " + queued_request.user.name + " baraye in belit cancel shod.")
             else:
+                list_box2.insert(print_id, ("Reserve karbar " + username + " baraye belit " + vehicle.lower() + " model " + seat_type_text + " movafagh bood."))
                 print("Reserve karbar " + username + " baraye belit " + vehicle.lower() + " model " + seat_type_text + " movafagh bood.")
 
         else:
+            list_box2.insert(print_id, reservation_validity)
             print(reservation_validity)
             
     def cancel_reservation(self, cmd, command_list):
@@ -517,6 +520,7 @@ class Railway_System:
             print(cancelation_validity)
 
     def cut_the_capacity(self, cmd):
+        print_id = cmd[-1]
         self.rule_idx += 1
         print("Qanoon shomareye " + str(self.rule_idx) + " ba movafaghiat sabt shod.")
         vehicle_type = Railway_System.capitalize_first_letter(cmd[4])
@@ -536,8 +540,10 @@ class Railway_System:
                     reserve.vehicle.capacity[reserve.seat_type] += 1
                     self._reservations.remove(reserve)
                     if reserve.seat_type == '0':
+                        list_box2.insert(print_id, ("Reserve karbar " + reserve.user.name + " baraye " + reserve.vehicle.vehicle_type.lower() + " model Normal be dadil qanoon " + str(self.rule_idx) + " cancel shod."))
                         print("Reserve karbar " + reserve.user.name + " baraye " + reserve.vehicle.vehicle_type.lower() + " model Normal be dadil qanoon " + str(self.rule_idx) + " cancel shod.")
                     else:
+                        list_box2.insert(print_id, ("Reserve karbar " + reserve.user.name + " baraye " + reserve.vehicle.vehicle_type.lower() + " model VIP" + reserve.seat_type + " be dadil qanoon " + str(self.rule_idx) + " cancel shod."))
                         print("Reserve karbar " + reserve.user.name + " baraye " + reserve.vehicle.vehicle_type.lower() + " model VIP" + reserve.seat_type + " be dadil qanoon " + str(self.rule_idx) + " cancel shod.")
 
 
@@ -562,6 +568,7 @@ class Railway_System:
                     if reserve.seat_type == '0':
                         print("Reserve karbar " + reserve.user.name + " baraye " + reserve.vehicle.vehicle_type.lower() + " model Normal be dadil qanoon " + str(self.rule_idx) + " cancel shod.")
                     else:
+                        
                         print("Reserve karbar " + reserve.user.name + " baraye " + reserve.vehicle.vehicle_type.lower() + " model VIP" + reserve.seat_type + " be dadil qanoon " + str(self.rule_idx) + " cancel shod.")
 
     def apply_time_limit(self, cmd):
@@ -654,20 +661,23 @@ def get_trains():
         for cmd in vehicles_commands:
             ali_baba.add_vehicle(cmd)
         print("Done")
-        messagebox.showinfo(title="Successfully Done.", message="Vehicles are valid!")
+        messagebox.showinfo(title="Successfully Done.", message="Vehicles are valid!\nNow enter the commands.")
     else:
         print("Error")
-        messagebox.showerror(title="Unsuccessful.", message="Something went wrong, try again.", )
-        main_app()
+        messagebox.showerror(title="Unsuccessful.", message="Something went wrong, try again.")
+        sys.exit()
+
 
 
 # if it didn't work, I will bring the whole block below under an if statement. if vehicles_validity...
 def get_command():
+    global cmd_no
+    global cmd_ls
     commands_list = []
     if vehicles_validity:
-        k = int(input())
+        k = cmd_no
         for i in range(k):
-            data = input().split()
+            data = cmd_ls[i].split()
             data.append(i)
             commands_list.append(data)
             
@@ -691,51 +701,108 @@ def get_command():
                 ali_baba.cancel_reservation(command, commands_list)
 
 
+def func_to_call_get_vehicle():
+    train_info.grid_forget()
+    vip_set.grid_forget()
+    sub_btn.grid_forget()
+    vip_lbl.grid_forget()
+    trn_info.grid_forget()
+    val_key.grid_forget()
+    trains_count_till_now.grid_forget()
+    # I can print trains as a list.
+    get_trains()
+
+
+def func_to_call_get_commands():
+    
+    get_command()
+
+
 no = 0
 ls = []
 vips = []
 
 
-def main_app():
-    inp_counter = 0
-    def counter():
-        global inp_counter
-        inp_counter += 1
-        global no
-        no = int(n.get())
-        global ls
-        ls.append(train_info.get())
-        global vips
-        vips.append(vip_set.get())
-        trains_count_till_now.config(text="{} of {} entered.".format(inp_counter, n.get()))
-        n.grid_forget()
-        trains_no_text.grid_forget()
+cmd_no = 0
+cmd_ls = []
+
+inp_counter = 0
+def counter():
+    global inp_counter
+    inp_counter += 1
+    global no
+    no = int(n.get())
+    global ls
+    ls.append(train_info.get())
+    global vips
+    vips.append(vip_set.get())
+    trains_count_till_now.config(text="{} of {} entered.".format(inp_counter, n.get()))
+    n.grid_forget()
+    trains_no_text.grid_forget()
+    list_box.insert(inp_counter, train_info.get())
+
+cmd_inp_counter = 0
+def cmd_adder():
+    global cmd_inp_counter
+    cmd_inp_counter += 1
+    global cmd_no
+    cmd_no = int(command_no_entry.get())
+    global cmd_ls
+    cmd_ls.append(commands_list.get())
+    cmd_no = int(command_no_entry.get())
+    commands_no_text.grid_forget()
+    command_no_entry.grid_forget()
+    cmd_ls.append(commands_list.get())
+    print(cmd_ls)
 
 
 
-    window = Tk()
-    window.title("Railway management system")
-    window.geometry("600x360")
-    window.resizable(width=False, height=False)
-    trains_no_text = Label(window, text="no of trains:")
-    trains_no_text.grid(column=0, row=0)
-    n = Entry(window)
-    n.grid(column=1, row=0)
-    Label(window, text="Train Information:").grid(column=0, row=1)
-    train_info = Entry(window)
-    train_info.grid(column=1, row=1)
-    Label(window, text="VIP set:").grid(column=0, row=2)
-    vip_set = Entry(window)
-    vip_set.grid(column=1, row=2)
-    Button(window, text="submit", command=counter).grid(column=2, row=2)
-    trains_count_till_now = Label(window, text="0 of n entered.")
-    trains_count_till_now.grid(column=2, row=1)
+
+window = Tk()
+window.title("Railway management system")
+window.geometry("500x500")
+window.resizable(width=False, height=False)
+trains_no_text = Label(window, text="no of trains:")
+trains_no_text.grid(column=0, row=0)
+n = Entry(window)
+n.grid(column=1, row=0)
+trn_info = Label(window, text="Train Information:")
+trn_info.grid(column=0, row=1)
+train_info = Entry(window)
+train_info.grid(column=1, row=1)
+vip_lbl = Label(window, text="VIP set:")
+vip_lbl.grid(column=0, row=2)
+vip_set = Entry(window)
+vip_set.grid(column=1, row=2)
+sub_btn = Button(window, text="submit", command=counter)
+sub_btn.grid(column=2, row=2)
+trains_count_till_now = Label(window, text="0 of n entered.")
+trains_count_till_now.grid(column=2, row=1)
+val_key = Button(window, text="\t  Validate Trains\t\t", command=func_to_call_get_vehicle)
+val_key.grid(column=1, row=3)
+list_box = Listbox()
+list_box.grid(column=1, row=4)
+
+#===================================================================
 
 
-    Button(window, text="\t  Validate Trains\t\t", command=get_trains).grid(column=1, row=3)
+
+commands_no_text = Label(window, text="no of commands and ruls:")
+commands_no_text.grid(column=0, row=5)
+submit_n_cmd = Button(window, text="submit", command=cmd_adder)
+submit_n_cmd.grid(column=2, row=5)
+command_no_entry = Entry(window)
+command_no_entry.grid(column=1, row=5)
+cmd_inp_txt = Label(window, text="input reserve command or rule:")
+cmd_inp_txt.grid(column=0, row=6)
+commands_list = Entry(window)
+commands_list.grid(column=1, row=6)
+validate_cmds = Button(window, text="\t  Done\t\t", command=func_to_call_get_commands)
+validate_cmds.grid(column=1, row=7)
 
 
-    Button(window, text="Exit", command=sys.exit).grid(column=1, row=5)
-    window.mainloop()
+list_box2 = Listbox()
+list_box2.grid(column=1, row=8)
 
-main_app()
+
+window.mainloop()
